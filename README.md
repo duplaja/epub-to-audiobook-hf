@@ -3,13 +3,13 @@ Epub to MB4 Audiobook, with StyleTTS2 via HuggingFace Spaces API
 
 ## Notes
 
-This uses [StyleTTS 2](https://github.com/yl4579/StyleTTS2). Running on the Smallest Tesla T4 space, it generates audio at around 10x realtime (10 min audio for one minute of running). [See a demo here](https://huggingface.co/spaces/styletts2/styletts2), to hear the quality.
+* This uses [StyleTTS 2](https://github.com/yl4579/StyleTTS2). Running on the Smallest Tesla T4 space, it generates audio at around 10x realtime (10 min audio for one minute of running). [See a demo here](https://huggingface.co/spaces/styletts2/styletts2), to hear the quality.
 
-This requires a HuggingFace account, with billing attached. To give an idea of efficiency, I generated a 5 hour audiobook in around 30 min, $0.35 in costs or so (counting start up time, etc)
+* This requires a HuggingFace account, with billing attached. To give an idea of efficiency, I generated a 5 hour audiobook in around 30 min, $0.35 in costs or so (counting start up time, etc)
 
-This is very much a version 1.0. I haven't extensively tested the epub parsing, outside of a few that I had. I can't guarantee it'll work with all of them.
+* This is very much a version 1.0. I haven't extensively tested the epub parsing, outside of a few that I had. I can't guarantee it'll work with all of them.
 
-This is designed to handle failure gracefully, in that if you start generating, and it crashes / errors during the generating process (happens occasionally with the HF API), then it'll skip over already generated chapters, and generate starting with the first one that is missing. This is also nice for breaking up the generation of large books. The m4b file is only generated once all chapters are generated.
+* This is designed to handle failure gracefully, in that if you start generating, and it crashes / errors during the generating process (happens occasionally with the HF API), then it'll skip over already generated chapters, and generate starting with the first one that is missing. This is also nice for breaking up the generation of large books. The m4b file is only generated once all chapters are generated.
 
 ## Directions
 
