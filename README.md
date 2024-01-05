@@ -35,5 +35,10 @@ Run using `python3 epub-to-audiobook-hf.py <filename-of-epub>.
 
 ## A Big Thanks To:
 
-[mrfakename](https://huggingface.co/mrfakename) : Original developer of the StyleTTS 2 Hugging Face Space
-[StyleTTS 2 Project, and all involved](https://github.com/yl4579/StyleTTS2)
+* [mrfakename](https://huggingface.co/mrfakename) : Original developer of the StyleTTS 2 Hugging Face Space, and a huge help for bouncing ideas / troubleshooting!
+* [audiobookshelf](https://github.com/advplyr/audiobookshelf), for inspiring this project
+* [StyleTTS 2 Project](https://github.com/yl4579/StyleTTS2)
+* [m4b-util](https://github.com/Tsubashi/m4b-util)
+* [ebooklib](https://github.com/aerkalov/ebooklib)
+* [epub-to-audiobook](https://github.com/p0n1/epub_to_audiobook)
+* [HuggingFace](https://huggingface.co)
