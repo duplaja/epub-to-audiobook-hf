@@ -13,15 +13,15 @@ This is designed to handle failure gracefully, in that if you start generating, 
 
 ## Directions
 
-Clone this repository locally.
+* Clone this repository locally.
 
-Install all dependencies, as needed: `pip install -r requirements.txt`
+* Install all dependencies, as needed: `pip install -r requirements.txt`
 
-Sign up on [HuggingFace.co](https://hugginface.co), if you have not already. (note: may have to disable adblocker to sign up, otherwise redirect breaks). Add a payment method. Generate a token with write access, using this link: [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+* Sign up on [HuggingFace.co](https://hugginface.co), if you have not already. (note: may have to disable adblocker to sign up, otherwise redirect breaks). Add a payment method. Generate a token with write access, using this link: [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
 
-Make a copy on HuggingFace of this space: [https://huggingface.co/spaces/styletts2/styletts2](https://huggingface.co/spaces/Dupaja/styletts2-public/) (3 dots, Duplicate this Space, private copy). Pick the lowest GPU instance, Small Tesla T4. (Note: This demo instance is running on the Free CPU plan, so it is not really usable. If you want to test out the voices first, check out the official demo here: [https://huggingface.co/spaces/styletts2/styletts2](https://huggingface.co/spaces/styletts2/styletts2) .
+* Make a copy on HuggingFace of this space: [https://huggingface.co/spaces/styletts2/styletts2](https://huggingface.co/spaces/Dupaja/styletts2-public/) (3 dots, Duplicate this Space, private copy). Pick the lowest GPU instance, Small Tesla T4. (Note: This demo instance is running on the Free CPU plan, so it is not really usable. If you want to test out the voices first, check out the official demo here: [https://huggingface.co/spaces/styletts2/styletts2](https://huggingface.co/spaces/styletts2/styletts2) .
 
-Go to your new space's settings, and set your "Sleep After" time to 15 min, to prevent it from running when not in use. This runs at a cost of $0.60 / hour, billed by the minute, and you can pause at any time from the settings page, using the Pause toggle.
+* Go to your new space's settings, and set your "Sleep After" time to 15 min, to prevent it from running when not in use. This runs at a cost of $0.60 / hour, billed by the minute, and you can pause at any time from the settings page, using the Pause toggle.
 
 Once the Space builds, do the following:
 
@@ -31,7 +31,7 @@ Once the Space builds, do the following:
 
 - Put the epub you want to generate from in the same folder as epub-to-audiobook-hf.py
 
-Run using `python3 epub-to-audiobook-hf.py <filename-of-epub>.
+* Run using `python3 epub-to-audiobook-hf.py <filename-of-epub>.
 
 ## A Big Thanks To:
 
