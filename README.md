@@ -27,7 +27,7 @@ Once the Space builds, do the following:
 
 - Go to your Space's App page, and find the API link in the footer. This will give you the API URL (with this setup, API url will change each time you restart / pause / sleep the Space. Not sure if there's a way to change this). 
 
-- Add the API url to epub-to-audiobook-hf.py (will need to update each time the Space goes to sleep) and your HuggingFace Token to this file, lines 24 and 26.
+- Add the API url to epub-to-audiobook-hf.py (will need to update each time the Space goes to sleep) and your HuggingFace Token to this file, lines 24 and 26, or set the `SPACES_API_URL` and `HF_TOKEN` env variables.
 
 - Put the epub you want to generate from in the same folder as epub-to-audiobook-hf.py
 
