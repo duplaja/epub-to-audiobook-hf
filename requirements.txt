@@ -1,0 +1,8 @@
+m4b-util
+ebooklib
+beautifulsoup4
+gradio_client
+natsort
+numpy
+soundfile
+argparse
