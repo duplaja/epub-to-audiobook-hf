@@ -21,9 +21,9 @@ from natsort import natsorted
 # Configure these before running
 #######################################################################
 
-spaces_api_url = 'https://xxxxxxxxxxxxxxxxxxxxxx'
+spaces_api_url = os.getenv('SPACES_API_URL', 'https://xxxxxxxxxxxxxxxxxxxxxx')
 
-hf_token = 'hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+hf_token = os.getenv('HF_TOKEN', 'hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxx')
 
 style_voice = 'f-us-2' # [f-us-1, f-us-2, f-us-3, f-us-4, m-us-1, m-us-2, m-us-3, m-us-4]
 
