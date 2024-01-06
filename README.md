@@ -3,9 +3,11 @@ Epub to MB4 Audiobook, with StyleTTS2 via HuggingFace Spaces API
 
 ## Notes
 
-* This uses [StyleTTS 2](https://github.com/yl4579/StyleTTS2). Running on the Smallest Tesla T4 space, it generates audio at around 10x realtime (10 min audio for one minute of running). [See a demo here](https://huggingface.co/spaces/styletts2/styletts2), to hear the quality.
+* Breaking Changes Jan 5: You must re-clone the Space and update your script here, both, for new features.
 
-* This requires a HuggingFace account, with billing attached. To give an idea of efficiency, I generated a 5 hour audiobook in around 30 min, $0.35 in costs or so (counting start up time, etc)
+* This uses [StyleTTS 2](https://github.com/yl4579/StyleTTS2). Running on the Smallest Tesla T4 space, it generates audio at around 10x realtime (10 min audio for one minute of running), or 13-15x realtime using LJSpeech (new default). [See a demo here](https://huggingface.co/spaces/styletts2/styletts2), to hear the quality.
+
+* This requires a HuggingFace account, with billing attached. To give an idea of efficiency, I generated a 5 hour audiobook in around 30 min, $0.35 in costs or so (counting start up time, etc). **Note: Retested on newly implimented LJSpeech, and time was closer to 20 min for the same book. 30% time / cost savings!**
 
 * This is very much a version 1.0. I haven't extensively tested the epub parsing, outside of a few that I had. I can't guarantee it'll work with all of them.
 
@@ -19,19 +21,21 @@ Epub to MB4 Audiobook, with StyleTTS2 via HuggingFace Spaces API
 
 * Sign up on [HuggingFace.co](https://hugginface.co), if you have not already. (note: may have to disable adblocker to sign up, otherwise redirect breaks). Add a payment method. Generate a token with write access, using this link: [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
 
-* Make a copy on HuggingFace of this space: [https://huggingface.co/spaces/Dupaja/styletts2-public/](https://huggingface.co/spaces/Dupaja/styletts2-public/) (3 dots, Duplicate this Space, private copy). Pick the lowest GPU instance, Small Tesla T4. (Note: This demo instance is running on the Free CPU plan, so it is not really usable. If you want to test out the voices first, check out the official demo here: [https://huggingface.co/spaces/styletts2/styletts2](https://huggingface.co/spaces/styletts2/styletts2) .
+* Make a copy on HuggingFace of this space: [https://huggingface.co/spaces/Dupaja/styletts2-public/](https://huggingface.co/spaces/Dupaja/styletts2-public/) (3 dots, Duplicate this Space, private copy). Pick the lowest GPU instance, Small Tesla T4. (Note: This demo instance is running on the Free CPU plan, so it is not really usable. If you want to test out the voices / sound first, check out the official demo here: [https://huggingface.co/spaces/styletts2/styletts2](https://huggingface.co/spaces/styletts2/styletts2) .
 
 * Go to your new space's settings, and set your "Sleep After" time to 15 min, to prevent it from running when not in use. This runs at a cost of $0.60 / hour, billed by the minute, and you can pause at any time from the settings page, using the Pause toggle.
 
 Once the Space builds, do the following:
 
-- Go to your Space's App page, and find the API link in the footer. This will give you the API URL (with this setup, API url will change each time you restart / pause / sleep the Space. Not sure if there's a way to change this). 
+- Go to your Space's App page, and find the API link in the footer. This will give you the API URL (**Only copy the url through .space , you don't need or want the rest of it, since it changes each time**). 
 
-- Add the API url to epub-to-audiobook-hf.py (will need to update each time the Space goes to sleep) and your HuggingFace Token to this file, lines 24 and 26, or set the `SPACES_API_URL` and `HF_TOKEN` env variables.
+- Add the API url to epub-to-audiobook-hf.py and your HuggingFace Token to this file, lines 24 and 26, or set the `SPACES_API_URL` and `HF_TOKEN` env variables.
 
 - Put the epub you want to generate from in the same folder as epub-to-audiobook-hf.py
 
-* Run using `python3 epub-to-audiobook-hf.py <filename-of-epub>.
+* Run using `python3 epub-to-audiobook-hf.py <filename-of-epub>. 
+
+* You can optionally use the command line flag `--voice f-us-2`, or other voice from the list to select a voice (see code or demo space for possible choices). Leaving this out defaults to LJSpeech, the (faster, better sounding imo) option, although it has only one voice.
 
 ## A Big Thanks To:
 

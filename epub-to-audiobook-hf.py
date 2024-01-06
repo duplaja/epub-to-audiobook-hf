@@ -21,34 +21,44 @@ from natsort import natsorted
 # Configure these before running
 #######################################################################
 
-spaces_api_url = os.getenv('SPACES_API_URL', 'https://xxxxxxxxxxxxxxxxxxxxxx')
+spaces_api_url = os.getenv('SPACES_API_URL', 'https://xxxxxxxxxxxxxxxxxxxxxx') #Use form: https://space-name.hf.space/, nothing after .space/
 
 hf_token = os.getenv('HF_TOKEN', 'hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxx')
-
-style_voice = 'f-us-2' # [f-us-1, f-us-2, f-us-3, f-us-4, m-us-1, m-us-2, m-us-3, m-us-4]
 
 ########################################################################
 # StyleTTS2 Code, running on HF Spaces
 ########################################################################
 
-def convert_chapter(client,chapter_path, chapter_paragraphs):
+def convert_chapter(client,chapter_path, chapter_paragraphs, style_voice):
 
     start_time = time.time()
 
     joined_chapter = '\n'.join(chapter_paragraphs)
 
-    result = client.predict(
-            joined_chapter,    
-            style_voice,
-            3,    # float (numeric value between 3 and 15) in 'Diffusion Steps' Slider component
-            api_name="/synthesize"
-    )
+    voicelist = ['f-us-1', 'f-us-2', 'f-us-3', 'f-us-4', 'm-us-1', 'm-us-2', 'm-us-3', 'm-us-4']
+
+    if style_voice in voicelist:
+
+        result = client.predict(
+                joined_chapter,    
+                style_voice,
+                3,    # float (numeric value between 3 and 15) in 'Diffusion Steps' Slider component
+                api_name="/synthesize"
+        )
+
+    else:
+
+        result = client.predict(
+            joined_chapter,	# str  in 'Text' Textbox component
+            3,	# float (numeric value between 3 and 15) in 'Diffusion Steps' Slider component
+            api_name="/ljsynthesize"
+        )
 
     os.rename(result, chapter_path)
 
     time_to_finish = time.time() - start_time
 
-    print('Chapter Finished in '+str(time_to_finish)+' seconds. ( '+chapter_path+')')
+    print('Chapter Finished in '+str(time_to_finish)+' seconds, using voice: '+style_voice+' ( '+chapter_path+')')
 
 ######################################################################
 # Ebook Parsing / Handling Code
@@ -143,7 +153,7 @@ def convert_wav_to_m4b(folder, book_title, author):
 # Controls the generation process, pass in epub filename
 ########################################################
 
-def generate_audiobook(epub_filename):
+def generate_audiobook(epub_filename, voice_type):
 
     start_time = time.time()
  
@@ -179,6 +189,9 @@ def generate_audiobook(epub_filename):
 
             chapter_num += 1
 
+            if chapter_num == 3:
+                break
+
             safe_chapter_title = sanitize_title(chapter_title)
             chapter_path = safe_title+'/'+str(chapter_num)+' - '+safe_chapter_title+'.wav'
 
@@ -186,7 +199,7 @@ def generate_audiobook(epub_filename):
             
                 chapter_paragraphs = chapter[1]
 
-                convert_chapter(client,chapter_path,chapter_paragraphs)
+                convert_chapter(client,chapter_path,chapter_paragraphs, voice_type)
 
     print('Chapters done generating, now converting to m4b.')
     
@@ -203,13 +216,18 @@ def main():
 
     # Add the mandatory arguments
     parser.add_argument('filename', help='Epub filename', type=str)
+    
+    # Add the optional voice flag that accepts a value
+    parser.add_argument('--voice', help='Specify voice type. Leave blank to use LJSpeech (best long-form), or set from the following to use multi-voice: f-us-1, f-us-2, f-us-3, f-us-4, m-us-1, m-us-2, m-us-3, m-us-4', type=str, default='LJSpeech - Longform')
 
     # Parse the arguments
     args = parser.parse_args()
 
     epub_filename = args.filename
-
-    generate_audiobook(epub_filename)
+    
+    voice_type = args.voice  # This will be longform if --voice is empty
+    
+    generate_audiobook(epub_filename, voice_type)
 
 if __name__ == "__main__":
     main()
