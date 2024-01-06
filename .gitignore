@@ -1,0 +1,7 @@
+# Ignore all subdirectories and their contents
+*/
+
+# Ignore files with specific extensions
+*.epub
+*.wav
+*.m4b
