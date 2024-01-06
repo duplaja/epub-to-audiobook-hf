@@ -189,9 +189,6 @@ def generate_audiobook(epub_filename, voice_type):
 
             chapter_num += 1
 
-            if chapter_num == 3:
-                break
-
             safe_chapter_title = sanitize_title(chapter_title)
             chapter_path = safe_title+'/'+str(chapter_num)+' - '+safe_chapter_title+'.wav'
 
