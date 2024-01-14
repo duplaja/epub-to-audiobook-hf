@@ -6,4 +6,4 @@ natsort
 numpy
 soundfile
 argparse
-huggingface_hub
+requests

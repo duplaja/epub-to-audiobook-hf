@@ -2,16 +2,13 @@
 
 import re
 import sys
+from pathlib import Path
 from typing import List, Tuple
 import os
 import time
 import argparse
 
 from m4b_util.helpers import Audiobook
-from pathlib import Path
-
-from gradio_client import Client
-from huggingface_hub import HfApi
 
 import ebooklib
 from ebooklib import epub
@@ -19,119 +16,118 @@ from ebooklib import epub
 from bs4 import BeautifulSoup
 from natsort import natsorted
 
-########################################################################
-# Configure these before running
-#######################################################################
+import requests
+import json
+import base64
 
-spaces_api_url = os.getenv('SPACES_API_URL', 'https://xxxxxxxxxxxxxxxxxxxxxx') #Use form: https://space-name.hf.space/, nothing after .space/
-
-hf_token = os.getenv('HF_TOKEN', 'hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxx')
-
-hf_repo_id = os.getenv('HF_REPO_ID','') #Example: Dupaja/styletts2-public
-
-#########################################################################
-# HF Space Control - Spins Up, or Pauses Space, by ID
-#########################################################################
-
-def control_hf_space(hf_api):
-
-    repo_status = hf_api.get_space_runtime(repo_id=hf_repo_id, token=hf_token)
-
-    current_status = repo_status.stage
-
-    ready_to_restart = ['PAUSED','STOPPED']
-
-    space_error_state = ['NO_APP_FILE','CONFIG_ERROR','BUILD_ERROR','RUNTIME_ERROR','DELETING']
-
-    time_slept = 0
-
-    if current_status in space_error_state:
-
-        print('Your Space is unable to be run at the moment. Status: '+current_status)
-        print('Your Space must be either RUNNING, PAUSED, BUILDING / RUNNING_BUILDING, or STOPPED for this script to work.')
-        print('Please check your Space config, and start manually')
-        sys.exit(0)
-        
-    elif current_status == 'RUNNING':
-        
-        return True
-
-    elif current_status in ready_to_restart:
-
-        repo_status = hf_api.restart_space(repo_id=hf_repo_id, token=hf_token)
-        current_status = repo_status.stage
-        print('Restarting your HF Space')
-
-    while current_status != 'RUNNING' and time_slept < 600:
-
-        time.sleep(15)
-        time_slept += 15
-
-        print('Your space is currently: '+current_status+'. (Time since check started: '+str(time_slept)+' seconds.)')
-        
-        repo_status = hf_api.get_space_runtime(repo_id=hf_repo_id, token=hf_token)
-        current_status = repo_status.stage
-        
-    if current_status != 'RUNNING':
-        
-        print('Space startup unsuccesfully took more than 10 min, with status: '+current_status)
-        sys.exit(0)
-    
-    else:
-        return True
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+import socket
+import threading
+import signal
 
 ########################################################################
-# StyleTTS2 Code, running on HF Spaces
+# StyleTTS2 Book Generation
 ########################################################################
 
-def convert_chapter(client,chapter_path, chapter_paragraphs, style_voice):
 
+def convert_chapter(chapter_path, chapter_paragraphs, voice_url):
     start_time = time.time()
-
     joined_chapter = '\n'.join(chapter_paragraphs)
 
-    voicelist = ['f-us-1', 'f-us-2', 'f-us-3', 'f-us-4', 'm-us-1', 'm-us-2', 'm-us-3', 'm-us-4']
-
-    if style_voice in voicelist:
-
-        result = client.predict(
-                joined_chapter,    
-                style_voice,
-                3,    # float (numeric value between 3 and 15) in 'Diffusion Steps' Slider component
-                api_name="/synthesize"
-        )
-
+    if voice_url:
+        result = styletts2(joined_chapter, 17, voice_url)
     else:
-
-        result = client.predict(
-            joined_chapter,	# str  in 'Text' Textbox component
-            3,	# float (numeric value between 3 and 15) in 'Diffusion Steps' Slider component
-            api_name="/ljsynthesize"
-        )
+        result = styletts2(joined_chapter, 8)
 
     os.rename(result, chapter_path)
-
-    time_to_finish = time.time() - start_time
-
-    print('Chapter Finished in '+str(time_to_finish)+' seconds, using voice: '+style_voice+' ( '+chapter_path+')')
+    time_to_finish = round(time.time() - start_time)
+    print('Generated chapter in '+str(time_to_finish)+' seconds, using voice: '+voice_url+' ( '+chapter_path+')')
 
 ######################################################################
 # Ebook Parsing / Handling Code
 #  - Modified from : https://github.com/p0n1/epub_to_audiobook
 #####################################################################
 
+########################################################################
+# Interface for StyleTTS2 server running on local Docker
+########################################################################
+
+
+def styletts2(text, diffusion_steps=8, voice_url=False, embedding_scale=1.2, alpha=0.25, beta=0.6, seed=69):
+    url = "http://localhost:5000/predictions"
+    data = {
+        "input": {
+            "text": text,
+            "alpha": alpha,
+            "beta": beta,
+            "diffusion_steps": diffusion_steps,
+            "embedding_scale": embedding_scale,
+            "seed": seed
+        }
+    }
+
+    if voice_url:
+        data['input']['reference'] = voice_url
+
+    headers = {'Content-Type': 'application/json'}
+    response = requests.post(url, data=json.dumps(data), headers=headers)
+    output = response.json().get('output', '')
+
+    if output:
+        output_data = output.split(',', 1)[-1]
+    else:
+        print("Something went wrong with gen")
+        exit(1)
+
+    with open('temp.mp3', 'wb') as file:
+        file.write(base64.b64decode(output_data))
+
+    return 'temp.mp3'
+
+########################################################################
+# Serve voice reference file for Docker image to use
+########################################################################
+
+
+def serve_file(filename):
+    class FileHandler(SimpleHTTPRequestHandler):
+        def do_GET(self):
+            self.path = filename
+            return super().do_GET()
+
+    httpd = HTTPServer((socket.gethostbyname(socket.gethostname()), 5001), FileHandler)
+    ip_address = httpd.server_address[0]
+    port = httpd.server_address[1]
+    thread = threading.Thread(target=httpd.serve_forever)
+    thread.daemon = True
+
+    def shutdown_server(a, b):
+        print("Shutting down")
+        httpd.shutdown()
+        thread.join()
+        print("Shutdown.")
+        sys.exit(1)
+    signal.signal(signal.SIGINT, shutdown_server)
+
+    thread.start()
+    return f'http://{ip_address}:{port}/{filename}', shutdown_server
+
+
 def get_book(input_file):
-    return epub.read_epub(input_file)
+    return epub.read_epub(input_file, {"ignore_ncx": True})
+
 
 def get_book_title(book) -> str:
     if book.get_metadata('DC', 'title'):
         return book.get_metadata("DC", "title")[0][0]
     return "Untitled"
 
+
 def get_book_author(book) -> str:
     if book.get_metadata('DC', 'creator'):
         return book.get_metadata("DC", "creator")[0][0]
     return "Unknown"
+
 
 def get_chapters(book) -> List[Tuple[str, str]]:
     chapters = []
@@ -166,10 +162,10 @@ def sanitize_title( title ) -> str:
     return sanitized_title
 
 ########################################################################
-# Code to combine wav files to M4b, using https://github.com/Tsubashi/m4b-util
+# Code to combine mp3 files to M4b, using https://github.com/Tsubashi/m4b-util
 ########################################################################
 
-def convert_wav_to_m4b(folder, book_title, author):
+def convert_mp3_to_m4b(folder, book_title, author):
 
     safe_author = sanitize_title(author)
     safe_title = sanitize_title(book_title)+' - '+safe_author+'.m4b'
@@ -180,26 +176,28 @@ def convert_wav_to_m4b(folder, book_title, author):
         cover="",
         output_name=safe_title,
         title=book_title,
-        date="01-04-24",
+        date="01-12-24",
         keep_temp_files=False,
     )
 
-    sorted_files = natsorted(Path(folder).glob("*.wav"))
+    sorted_files = natsorted(Path(folder).glob("*.mp3"))
 
+    print(sorted_files)
     book.add_chapters_from_filelist(sorted_files, True, False)
-    book.bind(os.path.join(folder,safe_title))
-
+    print("Added chapters")
+    book.bind(os.path.join(folder, safe_title))
+    print("Bound book")
     if not os.path.exists(os.path.join(folder,'temp_backup')):
         os.makedirs(os.path.join(folder,'temp_backup'))
 
-    # Remove each .wav file found to a temp_backup folder
-    for wav_file in sorted_files:
+    # Remove each .mp3 file found to a temp_backup folder
+    for mp3_file in sorted_files:
         try:
 
-            os.rename(wav_file,os.path.join(folder,'temp_backup',wav_file.name))
-            print(f'Moved file: {wav_file}')
+            os.rename(mp3_file,os.path.join(folder,'temp_backup',mp3_file.name))
+            print(f'Moved file: {mp3_file}')
         except OSError as e:
-            print(f'Error: {wav_file} : {e.strerror}')
+            print(f'Error: {mp3_file} : {e.strerror}')
 
 
     print(f"Book '{book_title}' by {author} has been created.")
@@ -208,7 +206,7 @@ def convert_wav_to_m4b(folder, book_title, author):
 # Controls the generation process, pass in epub filename
 ########################################################
 
-def generate_audiobook(epub_filename, voice_type, keep_awake):
+def generate_audiobook(epub_filename, voice_type):
 
     start_time = time.time()
  
@@ -232,16 +230,7 @@ def generate_audiobook(epub_filename, voice_type, keep_awake):
 
     chapter_folders = []
 
-    print('Converting Chapters using StyleTTS 2, via HF Spaces')
-
-    if hf_repo_id != '':
-        
-        hf_api = HfApi()
-        
-        space_available = control_hf_space(hf_api)
-
-
-    client = Client(spaces_api_url,hf_token=hf_token)
+    print('Converting Chapters using StyleTTS 2, via local StyleTTS2 server')
 
     for chapter in chapters:
 
@@ -255,23 +244,19 @@ def generate_audiobook(epub_filename, voice_type, keep_awake):
             #    break
 
             safe_chapter_title = sanitize_title(chapter_title)
-            chapter_path = safe_title+'/'+str(chapter_num)+' - '+safe_chapter_title+'.wav'
+            chapter_path = safe_title+'/'+str(chapter_num)+' - '+safe_chapter_title+'.mp3'
 
             if not os.path.exists(chapter_path):
             
                 chapter_paragraphs = chapter[1]
 
-                convert_chapter(client,chapter_path,chapter_paragraphs, voice_type)
+                convert_chapter(chapter_path,chapter_paragraphs, voice_type)
    
     print('Chapters done generating, now converting to m4b.')
-
-    if hf_repo_id != '' and not keep_awake:
-        pause = hf_api.pause_space(repo_id=hf_repo_id, token=hf_token)
-        print('Pausing Space: '+hf_repo_id)
     
-    convert_wav_to_m4b(safe_title, title, author)
+    convert_mp3_to_m4b(safe_title, title, author)
     
-    time_to_finish = time.time() -start_time
+    time_to_finish = time.time() - start_time
 
     print('Book Generated in: '+str(time_to_finish)+' seconds')
 
@@ -279,26 +264,21 @@ def generate_audiobook(epub_filename, voice_type, keep_awake):
 def main():
 
     parser = argparse.ArgumentParser(description='Process arguments.')
-
-    # Add the mandatory arguments
     parser.add_argument('filename', help='Epub filename', type=str)
-
-    #Adds keepawake
-    parser.add_argument('--awake', help='Keeps Space unpaused after running, for multiple book runs.', action='store_true')
-
-    # Add the optional voice flag that accepts a value
     parser.add_argument('--voice', help='Specify voice type. Leave blank to use LJSpeech (best long-form), or set from the following to use multi-voice: f-us-1, f-us-2, f-us-3, f-us-4, m-us-1, m-us-2, m-us-3, m-us-4', type=str, default='LJSpeech - Longform')
-
-    # Parse the arguments
     args = parser.parse_args()
-
     epub_filename = args.filename
-    
-    voice_type = args.voice  # This will be longform if --voice is empty
+    voice_file = args.voice
 
-    keep_awake = args.awake
-    
-    generate_audiobook(epub_filename, voice_type, keep_awake)
+    try:
+        voice_url, shutdown_server = serve_file(voice_file)
+        generate_audiobook(epub_filename, voice_url)
+        shutdown_server(True, True)
+
+    except KeyboardInterrupt:
+        print("\nExiting.")
+        sys.exit(0)
+
 
 if __name__ == "__main__":
     main()
