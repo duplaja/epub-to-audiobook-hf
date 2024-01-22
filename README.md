@@ -21,7 +21,7 @@ Epub to MB4 Audiobook, with StyleTTS2 via HuggingFace Spaces API
 
 * Install all dependencies, as needed: `pip install -r requirements.txt`
 
-* Sign up on [HuggingFace.co](https://hugginface.co), if you have not already. (note: may have to disable adblocker to sign up, otherwise redirect breaks). Add a payment method. Generate a token with write access, using this link: [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+* Sign up on [HuggingFace.co](https://huggingface.co), if you have not already. (note: may have to disable adblocker to sign up, otherwise redirect breaks). Add a payment method. Generate a token with write access, using this link: [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
 
 * Make a copy on HuggingFace of this space: [https://huggingface.co/spaces/Dupaja/styletts2-public/](https://huggingface.co/spaces/Dupaja/styletts2-public/) (3 dots, Duplicate this Space, private copy). Pick the lowest GPU instance, Small Tesla T4. (Note: This demo instance is running on the Free CPU plan, so it is not really usable. If you want to test out the voices / sound first, check out the official demo here: [https://huggingface.co/spaces/styletts2/styletts2](https://huggingface.co/spaces/styletts2/styletts2) .
 
